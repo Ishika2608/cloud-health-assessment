@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.pylint",
+    "ritwickdey.liveserver",
+    "mtxr.sqltools",
+    "humao.rest-client"
+  ]
+}

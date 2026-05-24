@@ -1,0 +1,10 @@
+{
+  "python.terminal.activateEnvironment": true,
+  "editor.formatOnSave": true,
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true
+  },
+  "liveServer.settings.port": 5500,
+  "liveServer.settings.donotShowInfoMsg": true
+}

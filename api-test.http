@@ -1,0 +1,51 @@
+### Test API Health
+GET http://localhost:5000/api/health
+
+###
+
+### Test Prediction - Normal
+POST http://localhost:5000/api/predict
+Content-Type: application/json
+
+{
+  "cpu": 40,
+  "memory": 45,
+  "disk_io": 30,
+  "network": 25
+}
+
+###
+
+### Test Prediction - Warning
+POST http://localhost:5000/api/predict
+Content-Type: application/json
+
+{
+  "cpu": 75,
+  "memory": 78,
+  "disk_io": 60,
+  "network": 55
+}
+
+###
+
+### Test Prediction - Critical
+POST http://localhost:5000/api/predict
+Content-Type: application/json
+
+{
+  "cpu": 92,
+  "memory": 90,
+  "disk_io": 85,
+  "network": 80
+}
+
+###
+
+### Get Model Metrics
+GET http://localhost:5000/api/metrics
+
+###
+
+### Simulate 20 data points
+GET http://localhost:5000/api/simulate

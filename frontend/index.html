@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cloud Health Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #f0f4f8;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text: #1a202c;
+      --muted: #718096;
+      --label: #a0aec0;
+      --green: #38a169;
+      --green-bg: #f0fff4;
+      --green-bd: #9ae6b4;
+      --yellow: #d69e2e;
+      --yellow-bg: #fffff0;
+      --yellow-bd: #faf089;
+      --red: #e53e3e;
+      --red-bg: #fff5f5;
+      --red-bd: #fe8686;
+      --blue: #3b82f6;
+      --shadow: 0 1px 3px rgba(0, 0, 0, .06), 0 4px 16px rgba(0, 0, 0, .06);
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, .05);
+      --radius: 14px;
+      --font: 'Inter', sans-serif;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .header-title {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -.3px;
+    }
+
+    .api-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 5px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--green-bd);
+      background: var(--green-bg);
+      color: var(--green);
+      transition: all .3s;
+    }
+
+    .api-badge.offline {
+      border-color: var(--red-bd);
+      background: var(--red-bg);
+      color: var(--red);
+    }
+
+    .api-badge .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: blink 2s infinite;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .35
+      }
+    }
+
+    /* ── PAGE ── */
+    .page {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 28px 32px;
+    }
+
+    /* ── STAT ROW ── */
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 24px 20px;
+      box-shadow: var(--shadow);
+      transition: box-shadow .2s, transform .2s;
+    }
+
+    .stat-card:hover {
+      box-shadow: 0 6px 28px rgba(0, 0, 0, .09);
+      transform: translateY(-1px);
+    }
+
+    .stat-card .slabel {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      color: var(--label);
+      margin-bottom: 10px;
+    }
+
+    .stat-card .sval {
+      font-size: 38px;
+      font-weight: 700;
+      letter-spacing: -1.5px;
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+
+    .sbadge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+
+    .sbadge.normal {
+      background: var(--green-bg);
+      color: var(--green);
+      border: 1px solid var(--green-bd);
+    }
+
+    .sbadge.warning {
+      background: var(--yellow-bg);
+      color: var(--yellow);
+      border: 1px solid var(--yellow-bd);
+    }
+
+    .sbadge.critical {
+      background: var(--red-bg);
+      color: var(--red);
+      border: 1px solid var(--red-bd);
+    }
+
+    .sbar-bg {
+      height: 5px;
+      background: var(--border);
+      border-radius: 99px;
+      margin-top: 14px;
+      overflow: hidden;
+    }
+
+    .sbar-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width .7s cubic-bezier(.4, 0, .2, 1), background .4s;
+    }
+
+    /* ── MAIN GRID ── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    /* ── SLIDERS ── */
+    .slider-group {
+      margin-bottom: 20px;
+    }
+
+    .slider-group:last-of-type {
+      margin-bottom: 26px;
+    }
+
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 500;
+      margin-bottom: 9px;
+    }
+
+    .slider-label .sv {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    input[type=range] {
+      -webkit-apperance: none;
+      width: 100%;
+      height: 4px;
+      background: var(--border);
+      border-radius: 99px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: var(--blue);
+      border-radius: 50%;
+      border: 2.5px solid #fff;
+      box-shadow: 0 1px 5px rgba(59, 130, 246, .45);
+      transition: box-shadow .15s;
+    }
+
+    input[type=range]::-webkit-slider-thumb:hover {
+      box-shadow: 0 0 0 5px rgba(59, 130, 246, .13);
+    }
+
+    /* ── BUTTON ── */
+    .btn-run {
+      width: 100%;
+      padding: 13px;
+      background: var(--blue);
+      color: #fff;
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, .35);
+      transition: background .15s, box-shadow .15s, transform .1s;
+      letter-spacing: .1px;
+    }
+
+    .btn-run:hover {
+      background: #2563eb;
+      box-shadow: 0 4px 16px rgba(59, 130, 246, .4);
+    }
+
+    .btn-run:active {
+      transform: scale(.99);
+    }
+
+    .btn-run:disabled {
+      background: #93c5fd;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* ── RESULTS ── */
+    .results-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .result-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+    }
+
+    .result-box .rlabel {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      color: var(--label);
+      margin-bottom: 8px;
+    }
+
+    .result-box .rval {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -.8px;
+      color: var(--text);
+    }
+
+    .result-box .rval.sm {
+      font-size: 19px;
+    }
+
+    .result-box .rval.green {
+      color: var(--green);
+    }
+
+    .result-box .rval.yellow {
+      color: var(--yellow);
+    }
+
+    .result-box .rval.red {
+      color: var(--red);
+    }
+
+    .votes-section {
+      margin-top: 18px;
+    }
+
+    .votes-lbl {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .7px;
+      text-transform: uppercase;
+      color: var(--label);
+      margin-bottom: 10px;
+    }
+
+    .vote-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 12px;
+      margin-bottom: 7px;
+    }
+
+    .vote-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .vote-item .vn {
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 180px;
+      color: var(--label);
+      font-size: 13px;
+      gap: 10px;
+    }
+
+    /* ── BOTTOM GRID ── */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 18px;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 240px;
+    }
+
+    .donut-wrap {
+      position: relative;
+      height: 200px;
+    }
+
+    .donut-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .leg-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .leg-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── SPINNER ── */
+    .spin {
+      display: inline-block;
+      width: 15px;
+      height: 15px;
+      border: 2px solid rgba(255, 255, 255, .4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: rot .6s linear infinite;
+      vertical-align: middle;
+      margin-right: 5px;
+    }
+
+    @keyframes rot {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ── SIMULATE BTN ── */
+    .btn-sim {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-family: var(--font);
+      cursor: pointer;
+      font-weight: 500;
+      transition: background .15s, color .15s;
+    }
+
+    .btn-sim:hover {
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 960px) {
+
+      .main-grid,
+      .bottom-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stat-row {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .page {
+        padding: 20px 16px;
+      }
+
+      header {
+        padding: 0 16px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .stat-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ══ HEADER ═══════════════════════════════════ -->
+  <header>
+    <span class="header-title">Cloud Health Dashboard</span>
+    <div class="api-badge" id="api-badge">
+      <span class="dot"></span>
+      <span id="api-text">Connecting…</span>
+    </div>
+  </header>
+
+  <div class="page">
+
+    <!-- ── Stat Cards ──────────────────────────── -->
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="slabel">CPU Usage</div>
+        <div class="sval" id="sc-cpu">—</div>
+        <span class="sbadge normal" id="sc-cpu-badge">—</span>
+        <div class="sbar-bg">
+          <div class="sbar-fill" id="sb-cpu" style="width:0%;background:var(--blue)"></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="slabel">Memory Usage</div>
+        <div class="sval" id="sc-mem">—</div>
+        <span class="sbadge normal" id="sc-mem-badge">—</span>
+        <div class="sbar-bg">
+          <div class="sbar-fill" id="sb-mem" style="width:0%;background:var(--green)"></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="slabel">System Health</div>
+        <div class="sval" id="sc-health" style="font-size:26px;margin-top:4px">—</div>
+        <span class="sbadge normal" id="sc-health-badge">Run a prediction</span>
+      </div>
+    </div>
+
+    <!-- ── Input + Results ─────────────────────── -->
+    <div class="main-grid">
+
+      <!-- Left: sliders -->
+      <div class="card">
+        <div class="card-title">Configure inputs</div>
+
+        <div class="slider-group">
+          <div class="slider-label">CPU Usage <span class="sv" id="dv-cpu">50%</span></div>
+          <input type="range" min="0" max="100" value="50" id="sl-cpu"
+            oninput="document.getElementById('dv-cpu').textContent=this.value+'%'">
+        </div>
+        <div class="slider-group">
+          <div class="slider-label">Memory Usage <span class="sv" id="dv-mem">50%</span></div>
+          <input type="range" min="0" max="100" value="50" id="sl-mem"
+            oninput="document.getElementById('dv-mem').textContent=this.value+'%'">
+        </div>
+        <div class="slider-group">
+          <div class="slider-label">Disk I/O <span class="sv" id="dv-disk">35%</span></div>
+          <input type="range" min="0" max="100" value="35" id="sl-disk"
+            oninput="document.getElementById('dv-disk').textContent=this.value+'%'">
+        </div>
+        <div class="slider-group">
+          <div class="slider-label">Network Traffic <span class="sv" id="dv-net">50%</span></div>
+          <input type="range" min="0" max="100" value="50" id="sl-net"
+            oninput="document.getElementById('dv-net').textContent=this.value+'%'">
+        </div>
+
+        <button class="btn-run" id="btn-run" onclick="runPrediction()">Run Prediction</button>
+      </div>
+
+      <!-- Right: results -->
+      <div class="card">
+        <div class="card-title">Prediction results</div>
+        <div id="results-wrap">
+          <div class="empty">
+            <svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="#cbd5e0" stroke-width="1.4">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+            </svg>
+            <span>Run a prediction to see results</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Charts ──────────────────────────────── -->
+    <div class="bottom-grid">
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+          <span class="card-title" style="margin:0">CPU &amp; Memory trends</span>
+          <button class="btn-sim" onclick="loadSimulation()">↻ Simulate</button>
+        </div>
+        <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Resource distribution</div>
+        <div class="donut-wrap"><canvas id="donutChart"></canvas></div>
+        <div class="donut-legend" id="donut-legend"></div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    const API = "http://localhost:5000";
+    let trendChart, donutChart;
+    const tL = [], tC = [], tM = [];
+
+    // ── Helpers ──────────────────────────────────────────
+    const statusClass = v => v > 85 ? "critical" : v > 70 ? "warning" : "normal";
+    const statusText = v => v > 85 ? "Critical" : v > 70 ? "Warning" : "Normal";
+    const statusColor = c => ({ normal: "#38a169", warning: "#d69e2e", critical: "#e53e3e" })[c];
+    const healthWord = s => ({ Normal: "Healthy", Warning: "Moderate", Critical: "Unhealthy" })[s] || s;
+    const healthBadge = s => ({ Normal: "All systems nominal", Warning: "Degraded performance", Critical: "Immediate action needed" })[s] || s;
+
+    // ── API check ────────────────────────────────────────
+    async function checkAPI() {
+      const badge = document.getElementById("api-badge");
+      const text = document.getElementById("api-text");
+      try {
+        const r = await fetch(`${API}/api/health`, { signal: AbortSignal.timeout(3000) });
+        if (r.ok) {
+          badge.className = "api-badge";
+          text.textContent = "API Operational";
+          loadSimulation();
+        } else throw 0;
+      } catch {
+        badge.className = "api-badge offline";
+        text.textContent = "API Offline — Demo Mode";
+        demoSeed();
+      }
+    }
+
+    // ── Trend chart ──────────────────────────────────────
+    function initTrend() {
+      trendChart = new Chart(document.getElementById("trendChart").getContext("2d"), {
+        type: "line",
+        data: {
+          labels: tL,
+          datasets: [
+            {
+              label: "CPU", data: tC, borderColor: "#3b82f6", backgroundColor: "rgba(59,130,246,.08)",
+              tension: .4, fill: true, pointRadius: 4, pointBackgroundColor: "#3b82f6", borderWidth: 2
+            },
+            {
+              label: "Memory", data: tM, borderColor: "#38a169", backgroundColor: "rgba(56,161,105,.06)",
+              tension: .4, fill: true, pointRadius: 4, pointBackgroundColor: "#38a169", borderWidth: 2, borderDash: [5, 3]
+            }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "top", align: "start",
+              labels: { color: "#718096", font: { family: "Inter", size: 12 }, usePointStyle: true, pointStyleWidth: 8, boxHeight: 8 }
+            }
+          },
+          scales: {
+            x: { ticks: { color: "#a0aec0", font: { family: "Inter", size: 11 }, maxTicksLimit: 8 }, grid: { color: "#f1f5f9" } },
+            y: {
+              min: 0, max: 100,
+              ticks: { color: "#a0aec0", font: { family: "Inter", size: 11 }, callback: v => v + "%" },
+              grid: { color: "#f1f5f9" }
+            }
+          }
+        }
+      });
+    }
+
+    function pushTrend(cpu, mem, lbl) {
+      if (tL.length >= 20) { tL.shift(); tC.shift(); tM.shift(); }
+      tL.push(lbl); tC.push(+cpu.toFixed(1)); tM.push(+mem.toFixed(1));
+      trendChart.update();
+    }
+
+    // ── Donut chart ──────────────────────────────────────
+    const DONUT_COLORS = ["#3b82f6", "#38a169", "#f59e0b", "#10b981"];
+    const DONUT_LABELS = ["CPU", "Memory", "Disk", "Network"];
+
+    function updateDonut(cpu, mem, disk, net) {
+      const data = [cpu, mem, disk, net];
+      if (donutChart) {
+        donutChart.data.datasets[0].data = data;
+        donutChart.update();
+      } else {
+        donutChart = new Chart(document.getElementById("donutChart").getContext("2d"), {
+          type: "doughnut",
+          data: {
+            labels: DONUT_LABELS,
+            datasets: [{ data, backgroundColor: DONUT_COLORS, borderWidth: 2, borderColor: "#fff", hoverOffset: 4 }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false, cutout: "62%",
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
+      document.getElementById("donut-legend").innerHTML =
+        DONUT_LABELS.map((l, i) =>
+          `<div class="leg-item"><div class="leg-dot" style="background:${DONUT_COLORS[i]}"></div>${l} ${data[i]}%</div>`
+        ).join("");
+    }
+
+    // ── Prediction ───────────────────────────────────────
+    async function runPrediction() {
+      const btn = document.getElementById("btn-run");
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spin"></span>Running…';
+
+      const cpu = +document.getElementById("sl-cpu").value;
+      const mem = +document.getElementById("sl-mem").value;
+      const disk = +document.getElementById("sl-disk").value;
+      const net = +document.getElementById("sl-net").value;
+
+      updateDonut(cpu, mem, disk, net);
+
+      let d;
+      try {
+        const r = await fetch(`${API}/api/predict`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cpu, memory: mem, disk_io: disk, network: net })
+        });
+        d = await r.json();
+      } catch { d = mockPredict(cpu, mem); }
+
+      renderResults(d);
+      updateStatCards(cpu, mem, d);
+
+      const ts = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      pushTrend(d.predicted_cpu, d.predicted_memory, ts);
+
+      btn.disabled = false;
+      btn.innerHTML = "Run Prediction";
+    }
+
+    function renderResults(d) {
+      const sc = d.health_status.toLowerCase();
+      const rc = { Low: "#38a169", Medium: "#d69e2e", High: "#e53e3e" }[d.risk_level] || "#718096";
+      const hbg = { normal: "var(--green-bg)", warning: "var(--yellow-bg)", critical: "var(--red-bg)" }[sc];
+      const votes = d.votes || {};
+
+      const vHtml = Object.entries(votes).map(([k, v]) => {
+        const vc = v.toLowerCase();
+        return `<div class="vote-item">
+      <span class="vn">${k.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}</span>
+      <span class="sbadge ${vc}" style="font-size:11px;padding:2px 9px">${v}</span>
+    </div>`;
+      }).join("");
+
+      document.getElementById("results-wrap").innerHTML = `
+    <div class="results-grid">
+      <div class="result-box">
+        <div class="rlabel">Predicted CPU</div>
+        <div class="rval">${d.predicted_cpu}%</div>
+      </div>
+      <div class="result-box">
+        <div class="rlabel">Predicted Memory</div>
+        <div class="rval">${d.predicted_memory}%</div>
+      </div>
+      <div class="result-box" style="background:${hbg}">
+        <div class="rlabel">Health Status</div>
+        <div class="rval sm ${sc}">${healthWord(d.health_status)}</div>
+      </div>
+      <div class="result-box">
+        <div class="rlabel">Risk Level</div>
+        <div class="rval sm" style="color:${rc}">${d.risk_level}</div>
+      </div>
+    </div>
+    <div class="votes-section">
+      <div class="votes-lbl">Classifier Votes</div>
+      ${vHtml}
+    </div>`;
+    }
+
+    function updateStatCards(cpu, mem, d) {
+      const cc = statusClass(cpu), mc = statusClass(mem), hc = d.health_status.toLowerCase();
+
+      document.getElementById("sc-cpu").textContent = cpu + "%";
+      const cb = document.getElementById("sc-cpu-badge");
+      cb.className = `sbadge ${cc}`; cb.textContent = statusText(cpu);
+
+      document.getElementById("sc-mem").textContent = mem + "%";
+      const mb = document.getElementById("sc-mem-badge");
+      mb.className = `sbadge ${mc}`; mb.textContent = statusText(mem);
+
+      document.getElementById("sc-health").textContent = healthWord(d.health_status);
+      const hb = document.getElementById("sc-health-badge");
+      hb.className = `sbadge ${hc}`; hb.textContent = healthBadge(d.health_status);
+
+      const sbCpu = document.getElementById("sb-cpu");
+      sbCpu.style.width = cpu + "%"; sbCpu.style.background = statusColor(cc);
+      const sbMem = document.getElementById("sb-mem");
+      sbMem.style.width = mem + "%"; sbMem.style.background = statusColor(mc);
+    }
+
+    // ── Simulation ───────────────────────────────────────
+    async function loadSimulation() {
+      try {
+        const r = await fetch(`${API}/api/simulate`);
+        const pts = await r.json();
+        pts.slice(-12).forEach((p, i) => pushTrend(p.predicted_cpu, p.predicted_memory, `T-${12 - i}`));
+        const last = pts[pts.length - 1];
+        if (last) updateDonut(+(last.cpu || 60).toFixed(0), +(last.memory || 44).toFixed(0), +(last.disk_io || 35).toFixed(0), +(last.network || 50).toFixed(0));
+      } catch { }
+    }
+
+    function demoSeed() {
+      for (let i = 12; i >= 1; i--) {
+        pushTrend(45 + Math.random() * 35, 35 + Math.random() * 30, `T-${i}`);
+      }
+      updateDonut(60, 44, 35, 50);
+    }
+
+    // ── Offline mock ─────────────────────────────────────
+    function mockPredict(cpu, mem) {
+      const pc = Math.min(100, +(cpu + Math.random() * 10 - 3).toFixed(1));
+      const pm = Math.min(100, +(mem + Math.random() * 8 - 2).toFixed(1));
+      let s = "Normal", r = "Low";
+      if (pc > 85 || pm > 85) { s = "Critical"; r = "High"; }
+      else if (pc > 70 || pm > 70) { s = "Warning"; r = "Medium"; }
+      return {
+        predicted_cpu: pc, predicted_memory: pm, health_status: s, risk_level: r,
+        votes: { decision_tree: s, random_forest: s, logistic_regression: pc > 88 ? "Warning" : s }
+      };
+    }
+
+    // ── Boot ─────────────────────────────────────────────
+    initTrend();
+    checkAPI();
+  </script>
+</body>
+
+</html>

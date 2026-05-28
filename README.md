@@ -1,23 +1,66 @@
-# ☁ CloudPulse — Health Assessment & Performance Prediction
-## Project Structure
+# ☁️ Health Assessment and Performance Prediction in Cloud Environments using Ensemble Modeling
+
+A mini project by **Anupriya Bhoyar**, **Dhanashree Khamitkar**, **Ishika Singh**
+T.Y. B.Tech CSE (Data Science) | G H Raisoni College of Engineering and Management, Pune | 2025-26
+
+---
+
+## 📌 About the Project
+
+This system is a stateless, full-stack cloud monitoring solution that combines **performance prediction** and **health assessment** using ensemble machine learning models.
+
+It collects cloud metrics (CPU, Memory, Disk I/O, Network), predicts future resource usage, and classifies system health as **Normal**, **Warning**, or **Critical** — all in real time without relying on historical data storage.
+
+---
+
+## 🗂️ Project Structure
+
 ```
-cloud_health/
+cloud-health-assessment/
 ├── backend/
-│   ├── app.py          ← Flask REST API
-│   ├── model.py        ← ML models (Module 1 + Module 2)
+│   ├── app.py              ← Flask REST API
+│   ├── model.py            ← ML models (Module 1 + Module 2)
 │   └── requirements.txt
 ├── frontend/
-│   └── index.html      ← Dashboard (open in browser)
-├── start.bat           ← One-click Windows launcher
+│   └── index.html          ← Dashboard (open in browser)
+├── start.bat               ← One-click Windows launcher
 └── README.md
 ```
-## Quick Start (Windows)
+
+---
+
+## ⚙️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Backend | Python, Flask 2.x |
+| Machine Learning | scikit-learn, pandas, numpy |
+| Frontend | HTML, CSS, JavaScript |
+| API Testing | Postman |
+| Version Control | Git & GitHub |
+
+---
+
+## 🧠 ML Architecture
+
+### Module 1 — Performance Prediction (Regression)
+- Random Forest Regressor + Gradient Boosting Regressor
+- Ensemble averaging for final CPU & Memory prediction
+
+### Module 2 — Health Classification
+- Decision Tree + Random Forest + Logistic Regression
+- Hard voting classifier → outputs Normal / Warning / Critical
+
+---
+
+## 🚀 Quick Start (Windows)
 
 ### Option A — Double-click
 Just run `start.bat` — it installs dependencies and starts the server.
 
 ### Option B — Manual
-```cmd
+
+```bash
 # Step 1: Install dependencies
 pip install flask flask-cors scikit-learn numpy pandas
 
@@ -26,74 +69,70 @@ cd backend
 python app.py
 
 # Step 3: Open frontend
-# Open frontend\index.html in your browser
+# Open frontend/index.html in your browser
 ```
 
-## API Endpoints
+---
 
-| Method | URL | Description |
-|--------|-----|-------------|
-| GET | `/api/health` | Server health check |
-| POST | `/api/predict` | Run prediction |
-| GET | `/api/metrics` | Model evaluation metrics |
-| GET | `/api/simulate` | Generate 20 random predictions |
+## 🔗 API Endpoints
 
-### POST /api/predict — Example
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/health` | Check if API is running |
+| POST | `/api/predict` | Predict CPU, Memory & Health Status |
+| GET | `/api/metrics` | Get model evaluation metrics |
+| GET | `/api/simulate` | Generate synthetic prediction data |
 
-**Request:**
+### Sample POST `/api/predict`
 ```json
 {
-  "cpu":     75,
-  "memory":  80,
-  "disk_io": 45,
+  "cpu": 75,
+  "memory": 80,
+  "disk_io": 50,
   "network": 60
 }
 ```
 
-**Response:**
+### Sample Response
 ```json
 {
-  "predicted_cpu":    82.4,
+  "predicted_cpu": 78.4,
   "predicted_memory": 83.1,
-  "health_status":   "Critical",
-  "risk_level":      "High",
+  "health_status": "Warning",
+  "risk_level": "Medium",
   "votes": {
-    "decision_tree":      "Critical",
-    "random_forest":      "Critical",
-    "logistic_regression":"Warning"
+    "decision_tree": "Warning",
+    "random_forest": "Warning",
+    "logistic_regression": "Critical"
   }
 }
 ```
-## Architecture
 
-```
-Input Metrics (CPU, Memory, Disk I/O, Network)
-        │
-        ▼
-┌──────────────────────────────────────┐
-│  MODULE 1 — REGRESSION ENSEMBLE      │
-│  RF Regressor + GB Regressor         │
-│  Final = (RF_pred + GB_pred) / 2     │
-│  Output: Predicted CPU, Memory       │
-└──────────────────────────────────────┘
-        │  Predicted values fed as features
-        ▼
-┌──────────────────────────────────────┐
-│  MODULE 2 — CLASSIFICATION ENSEMBLE  │
-│  Decision Tree + Random Forest       │
-│              + Logistic Regression   │
-│  Final = Majority Vote               │
-│  Output: Normal / Warning / Critical │
-└──────────────────────────────────────┘
-        │
-        ▼
-   Dashboard Output
-```
-## Label Rules (as per spec)
-- CPU > 85% → **Critical**
-- CPU 70–85% → **Warning**  
-- CPU < 70% → **Normal**
+---
 
-## Evaluation Metrics
-- Regression: MAE, RMSE
-- Classification: Accuracy, Confusion Matrix
+## 📊 Model Performance
+
+| Metric | Value |
+|---|---|
+| Classification Accuracy | ~83.5% |
+| Regression MAE | ~3.21 |
+| Regression RMSE | ~5.4 |
+| Test Cases Passed | 8/8 ✅ |
+
+---
+
+## 👩‍💻 Contributors
+
+| Name | Roll No | Contribution |
+|---|---|---|
+| Anupriya Bhoyar | 10 | Frontend, Reporting & Documentation |
+| Dhanashree Khamitkar | 14 | Backend & API |
+| Ishika Singh | 21 | Machine Learning Model |
+
+---
+
+## 🏫 Institution
+
+**G H Raisoni College of Engineering and Management**
+Wagholi, Pune 412207
+Department of CSE (Data Science)

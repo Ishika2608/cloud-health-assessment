@@ -1,5 +1,4 @@
 # ☁ CloudPulse — Health Assessment & Performance Prediction
-
 ## Project Structure
 ```
 cloud_health/
@@ -12,7 +11,6 @@ cloud_health/
 ├── start.bat           ← One-click Windows launcher
 └── README.md
 ```
-
 ## Quick Start (Windows)
 
 ### Option A — Double-click
@@ -66,7 +64,6 @@ python app.py
   }
 }
 ```
-
 ## Architecture
 
 ```
@@ -92,7 +89,6 @@ Input Metrics (CPU, Memory, Disk I/O, Network)
         ▼
    Dashboard Output
 ```
-
 ## Label Rules (as per spec)
 - CPU > 85% → **Critical**
 - CPU 70–85% → **Warning**  

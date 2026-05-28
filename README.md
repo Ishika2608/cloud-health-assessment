@@ -1,10 +1,5 @@
 # ☁️ Health Assessment and Performance Prediction in Cloud Environments using Ensemble Modeling
 
-A mini project by **Anupriya Bhoyar**, **Dhanashree Khamitkar**, **Ishika Singh**
-T.Y. B.Tech CSE (Data Science) | G H Raisoni College of Engineering and Management, Pune | 2025-26
-
----
-
 ## 📌 About the Project
 
 This system is a stateless, full-stack cloud monitoring solution that combines **performance prediction** and **health assessment** using ensemble machine learning models.
